@@ -1,0 +1,202 @@
+utworzenie projektu:
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+ZADANIE:
+Napisz kompletną, czystą, dobrze udokumentowaną aplikację "Saper" w Pythonie z użyciem pygame. Kod ma być gotowy do uruchomienia i odporny na edge-cases. Używaj zewnętrznych plików graficznych PNG (które przygotuję) i wspieraj tryb ciemny, który zamienia grafikę na wersję dark. Gra ma się skalować przy zmianie rozmiaru okna (maksymalizacja, różne proporcje ekranu).
+
+WYMOGI TECHNICZNE:
+- Python 3.10+.
+- pygame (zaznacz w requirements.txt np. pygame>=2.1).
+- Aplikacja uruchamiana jednym poleceniem `python main.py`.
+- Kod z typami (type hints), modularny, z czytelnymi komentarzami i dokumentacją funkcji.
+- Pliki graficzne (PNG) nie będą dołączone — gra powinna bezpiecznie obsłużyć brak niektórych plików (fallback do rysowania prostych kształtów), ale domyślnie wczytywać je z katalogu `assets/`:
+  - `assets/light/tile.png`, `assets/light/flag.png`, `assets/light/mine.png`, `assets/light/number_1.png` ... `assets/light/number_8.png`, `assets/light/cover.png`, `assets/light/bg.png`
+  - `assets/dark/tile.png`, `assets/dark/flag.png`, ... (analogiczne nazwy dla dark mode)
+  - Jeśli plik dark nie istnieje, fallback do wersji light.
+- UI powinno zawierać menu wyboru poziomu oraz przełącznik Dark Mode (który natychmiast zamienia grafiki i motyw).
+
+GŁÓWNE CECHY ROZGRYWKI:
+- Pole gry z kafelkami, prawidłowa mechanika sapera:
+  - lewy klik: odkryj pole,
+  - prawy klik: oznacz flagą/odznacz,
+  - kliknięcie przyciśniętych obydwu przycisków (chord) lub środkowy przycisk myszy: jeśli liczba flag wokół numeru równa liczbie, odsłoń sąsiadujące pola (bezpieczna weryfikacja).
+- Rekurencyjne odsłanianie pustych pól (flood fill).
+- Timer oraz licznik min/flag.
+- Tryb pauzy gdy okno traci fokus (opcjonalnie).
+- Obsługa klawiatury: strzałki do poruszania kursorem, Enter/Space odsłania, F flaguje, R resetuje, M przełącza tryb dark/light.
+- 5 poziomów trudności (nazwy w polskim języku): **nowicjusz**, **uczeń**, **adept**, **ekspert**, **mistrz**.
+  - Podaj sensowne domyślne wartości (możesz je zasugerować), np:
+    - nowicjusz: 9x9, 10 min
+    - uczeń: 12x12, 20 min
+    - adept: 16x16, 40 min
+    - ekspert: 24x16, 99 min
+    - mistrz: 32x20, 160 min
+  - Kod powinien pozwalać łatwo zmienić te wartości w jednym miejscu (konfiguracja).
+
+RESPONSYWNOŚĆ I SKALOWANIE:
+- Użyj „wirtualnego” canvas (np. baza 1280x720 lub inna sensowna rozdzielczość) i skaluj całą scenę do aktualnego rozmiaru okna przy zachowaniu proporcji. Kafelki muszą pozostać kwadratowe — przy nietypowych proporcjach dopasuj rozmiar kafelka tak, żeby mieścił się w dostępnej wysokości/szerokości.
+- Grafiki PNG mają być skalowane zachowując jakość (użyć pygame.transform.smoothscale() tam, gdzie to ma sens).
+- UI (pasek statusu, przyciski) powinny układać się elastycznie (ankorowane) i czytelnie przy każdej rozdzielczości.
+- Drobne okna/ekstremalne rozmiary: minimalny akceptowalny rozmiar okna powinien być wymuszony (np. 640x480) — poniżej tego, UI wyświetli komunikat „Za małe okno”.
+
+TRYB CIEMNY:
+- Implementuj przełącznik dark/light.
+- Grafikę ładuj z odpowiedniego podfolderu `assets/light/` lub `assets/dark/`.
+- Jeśli brakuje konkretnej grafiki dla dark, użyj grafiki z light z lekkim shaderem lub prostym przyciemnieniem (np. prymitywne przyciemnienie powierzchni).
+- Tryb ma być zapamiętywany w pliku ustawień lokalnych (`settings.json`) i ładowany przy starcie.
+
+ODPORNOŚĆ NA EDGE-CASES:
+- Losowanie min: nie pozwól na nakładanie się min, zapewnij losowanie deterministyczne dla testów (seed w opcjach).
+- Zapewnij, że pierwsze odsłonięcie nigdy nie trafia na minę (jeśli wymagane).
+- Bezpiecznie obsłuż wielokrotne kliknięcia, szybkie dwukliki, zmiany rozmiaru w trakcie akcji, przywrócenie kursora po pauzie itp.
+- Obsłuż sytuację braku plików graficznych (fallback) i błędów I/O bez crashu.
+- Obsłuż nietypowe DPI (Windows scaling) — przelicz skalę graficzną z uwzględnieniem pixel ratio, jeśli to możliwe.
+
+TESTY I KRYTERIA AKCEPTACJI:
+- Dostarcz prosty zestaw testów jednostkowych (pytest) dla:
+  - poprawności generacji planszy (liczba min, unikalne pozycje),
+  - poprawności obliczania sąsiadów (liczniki 1..8),
+  - funkcji flood fill (odsłanianie pustych pól),
+  - detekcji zwycięstwa/przegranej.
+- Przygotuj krótką listę manualnych testów akceptacyjnych:
+  1. Uruchom grę i wczytaj każdy poziom; potwierdź, że liczba min odpowiada konfiguracji.
+  2. Odsłoń pole — sprawdź że pierwsze odsłonięcie nie powoduje przegranej (jeśli wymaga to implementować).
+  3. Oznacz flagi i skorzystaj z chord — sprawdź, że odsłanianie działa prawidłowo.
+  4. Przełącz Dark Mode — wszystkie grafiki się zmieniają.
+  5. Zmaksymalizuj okno na różnych proporcjach i rozdzielczościach — gra poprawnie skaluje kafelki i UI.
+  6. Uruchom bez plików w `assets/` — gra działa z fallbackami.
+
+DODATKOWE WSKAZÓWKI IMPLEMENTACYJNE:
+- Podziel projekt na moduły: `main.py`, `game.py`, `board.py`, `ui.py`, `assets.py`, `settings.py`, `tests/`.
+- W `assets.py`: funkcje `load_image(name, mode)` które zwracają bezpieczny obiekt Surface (z fallbackiem).
+- W `board.py`: klasa `Board(rows, cols, mines, seed=None)` z metodami `reveal(x,y)`, `toggle_flag(x,y)`, `is_win()`, `is_loss()`, `adjacent_mines(x,y)`.
+- W `ui.py`: warstwa renderująca, obsługa skalowania, menu, przyciski, timer.
+- Użyj event loop pygame, minimalnego frame rate cap (np. 60 FPS) i delta timing dla timera.
+- Dodaj opcję zapisu/odczytu stanu rozgrywki (opcjonalnie) — ale jeśli robisz, to bezpiecznie.
+
+JĘZYK I KOMENTARZE:
+- Komentarze i komunikaty UI w języku polskim.
+- Komentarze poprowadzone tak, żeby inny dev mógł łatwo zmodyfikować wartości i dodać nowe poziomy.
+
+WYJŚCIE:
+- Wygeneruj kompletną strukturę plików projektu, z wypełnionymi plikami Python i przykładowym `requirements.txt` oraz `README.md` zawierającym instrukcje uruchomienia, konfiguracji assetów oraz checklistę testów manualnych i automatycznych.
+- Dołącz prosty `settings.json` przykładowy.
+- Jeśli w kodzie jest miejsce, w którym nie można automatycznie stworzyć sensownego fallbacku (np. art wymagany), dodaj czytelne instrukcje w README co zasugerować twórcy grafik.
+
+KRYTERIA JAKOŚCI (wymagane):
+- Kod uruchamia się i gra działa zgodnie z powyższymi założeniami.
+- Bez crashów przy brakujących assetach.
+- Poprawne skalowanie / tryb dark / obsługa 5 poziomów.
+- Testy jednostkowe dla logiki planszy przechodzą.
+
+DODAJ (opcjonalnie, jeżeli masz czas):
+- Animacje przy odsłanianiu pól (krótkie).
+- Dźwięki (również jako assets z fallbackiem).
+- Statystyki lokalne: najlepszy czas dla każdego poziomu.
+
+UWAGA DLA COPILOTA:
+- Bądź konserwatywny w wyborze domyślnych wartości, dokumentuj każdy magic number.
+- Stawiaj bezpieczeństwo (brak crashów) ponad „efektowność”.
+- W komentarzach kodu wskaż miejsca, gdzie użytkownik (ja) powinien wstawić swoje PNGy i jakie wymiary/sugerowany styl (np. 32x32 or 64x64 dla kafelków).
+- Generuj czytelny README z instrukcjami testowania dark mode i skalowania.
+
+KONIEC PROMPTU
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+naprawa w przypadku błędów:
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+
+ZADANIE DEBUG & FIX:
+Jesteś asystentem programistycznym. Masz za zadanie w pełni zdiagnozować i naprawić projekt "Saper" (Python + pygame) tak, aby spełniał wszystkie wymagania z oryginalnego promptu projektu (skalowanie okna, dark mode, 5 poziomów trudności, obsługa brakujących assetów, odporność na edge-cases, testy jednostkowe przechodzące itp.).
+
+CEL:
+1. Odtwórz (symuluj) uruchomienie: `python main.py`.
+2. Uruchom testy: `pytest -q` (zakładając katalog `tests/`).
+3. Wykryj wszystkie błędy, wyjątki, niezgodności z wymaganiami.
+4. Napraw kod — wprowadzaj minimalne, dobrze opisane poprawki.
+5. Dodaj/zmodyfikuj testy tak, by pokrywały wykryte problemy.
+6. Zapewnij, że po poprawkach wszystkie testy przechodzą i gra działa poprawnie według checklisty manualnej.
+7. Wygeneruj czytelny raport, listę zmian (patch/diff), oraz instrukcje jak powtórzyć naprawę lokalnie.
+
+WARUNKI POCZĄTKOWE:
+- Python 3.10+.
+- pygame zainstalowane.
+- Nie zakładaj dostępu do zewnętrnego internetu.
+- Jeżeli brakuje plików graficznych, używaj trybu fallback (zastępcze rysowanie) — nie crashuj.
+- Każda zmiana musi mieć test jednostkowy lub wyjaśnienie dlaczego test nie jest potrzebny.
+
+KROKI DIAGNOSTYCZNE (co Copilot ma wykonać automatycznie):
+1. **Static checks**
+   - Uruchom `python -m compileall .` lub równoważne, by wykryć syntax error.
+   - Uruchom `mypy` (jeśli dostępne) lub prostą kontrolę typów.
+   - Uruchom `flake8`/`pylint` (jeśli dostępne) i zanotuj krytyczne błędy, ale nie blokuj napraw.
+
+2. **Uruchomienie i logowanie**
+   - Uruchom `python main.py` w trybie testowym (headless jeśli możesz/konieczne — symuluj loop bez otwierania okna).
+   - Przechwyć stack trace’y i pełne logi.
+   - Jeśli gra crashuje przy wczytywaniu assetów — zidentyfikuj brakujące pliki i moduł odpowiedzialny (`assets.py`).
+
+3. **Uruchom testów**
+   - Uruchom `pytest -q`.
+   - Zanotuj nieudane testy i stack trace dla każdego.
+   - Dla każdego nieudanego testu: stwórz minimalny reproduktor (jeśli testów nie ma, napisz test, który pokazuje błąd).
+
+4. **Reprodukcja bugów UI/Gameplay**
+   - Sprawdź następujące przypadki (automatycznie/symulacyjnie tam, gdzie możliwe):
+     - losowanie planszy: liczba min, unikalność pozycji, seed deterministyczny,
+     - pierwsze odsłonięcie nie powoduje miny,
+     - flood fill odsłania pola rekurencyjnie,
+     - chord (kliknięcie obu przycisków) odsłania pola tylko, gdy liczba flag równa liczbie otaczających min,
+     - skalowanie: obliczanie rozmiaru kafelka dla różnych rozdzielczości,
+     - dark mode: czy `assets/dark/` jest wybierany, fallback do `assets/light/` i programowe przyciemnienie jeśli brakuje grafiki dark,
+     - obsługa braku assetów: aplikacja powinna nadal działać i rysować kształty.
+   - Jeśli coś nie da się zautomatyzować (grafika, okno), opisz kroki manualne i przygotuj testy jednostkowe logiczne bez pygame display.
+
+AUTOMATYCZNE NAPRAWY (jak Copilot ma działać):
+1. **Naprawy priorytetowe (niezwłoczne)**
+   - SyntaxError / ImportError: natychmiast popraw.
+   - Crash przy wczytywaniu assetów: dodaj bezpieczne `try/except` w `assets.py`, implementuj `load_image_safe(name, mode)` zwracające Surface fallback (np. prostokąt z kolorem) i logujące brak pliku.
+   - Błędy w logice `Board` (np. złe liczenie sąsiadów, złe odsłanianie): napraw i dodaj testy.
+   - Timer nie działa/nie resetuje: napraw logikę timera i użyj delta-time zamiast liczyć klatki.
+
+2. **Stabilność i edge-cases**
+   - Upewnij się, że pierwsze odsłonięcie nigdy nie trafia na minę (przemieszczanie min po pierwszym kliknięciu lub generacja po pierwszym kliknięciu).
+   - Dodaj ochrony przed wielokrotnymi równoczesnymi eventami (debounce / guardy).
+   - Zabezpiecz resizing: implementuj bezpieczne przeliczenie skal i ograniczeń minimalnego okna.
+
+3. **Testy**
+   - Dla każdej poprawki dodaj/zmodyfikuj test y w `tests/test_board.py`, `tests/test_assets.py`, `tests/test_scaling.py`.
+   - Testy muszą być determistyczne (użyj seedów tam, gdzie jest losowanie).
+
+4. **Wyjście napraw (co Copilot ma zwrócić)**
+   - Pełny raport (tekst): co było nie tak, jak to naprawiono, pliki zmienione, dlaczego taka zmiana.
+   - Lista zmian w formacie patch/diff (unified diff) lub serie plików z pełną zawartością (jeśli patch niemożliwy).
+   - Nowe/zmodyfikowane testy.
+   - Instrukcja jak uruchomić: `python -m venv .venv && .venv/bin/pip install -r requirements.txt && pytest -q && python main.py`
+   - Krótka lista manualnych testów do wykonania po naprawie (najważniejsze 6 z checklisty).
+   - Sugestie ulepszeń, jeśli naprawa wymaga istotnych decyzji projektowych.
+
+JEŚLI NIE MOŻESZ REPRODUKOWAĆ:
+- Wypisz hipotezy (co może być przyczyną: wersja pygame, brak assets, błąd DPI scaling, problem w event loop).
+- Dla każdej hipotezy wygeneruj minimalny test lub instrumentację (dodatkowe logowanie) którą developer powinien uruchomić lokalnie.
+- Zaproponuj dokładne polecenia diagnostyczne (np. `python -c "import pygame; print(pygame.version.ver)"`, `python -c "import sys,pygame; print(sys.getwindowsversion() if hasattr(sys,'getwindowsversion') else 'unix')"` itp.).
+
+DODATKOWE WYTYCZNE DLA POPRAWEK:
+- Wszystkie komunikaty i komentarze w języku polskim.
+- Każda funkcja powinna mieć docstring z opisem wejść/wyjść.
+- Unikaj „magicznych liczb” — parametry konfiguracyjne trzymać w `settings.py`.
+- Jeżeli zmieniasz API (np. sygnatury funkcji), zadbaj o backward-compatible wrappery albo zaktualizuj wszystkie miejsca wywołań.
+- Każda poprawka której nie potrafisz wykonać automatycznie powinna być opisana jako "krok manualny" z dokładnymi instrukcjami i sugerowanym patchem.
+
+FORMAT ODPOWIEDZI (oczekiwany od Copilota):
+1. Krótki podsumowujący nagłówek (1–2 zdania) z wynikiem (naprawione / nie naprawione + główny problem).
+2. Sekcja "Co zrobiłem" (lista kroków).
+3. Sekcja "Zmienione pliki" — dla każdego pliku: krótki opis zmiany + diff (albo pełna nowa zawartość).
+4. Sekcja "Nowe/zmodyfikowane testy" — wyjaśnienie i wyniki testów.
+5. Sekcja "Instrukcje do uruchomienia" — krok po kroku (komendy).
+6. Sekcja "Manualne testy do wykonania" (skrócona lista 6 punktów).
+7. Jeśli naprawa jest niekompletna — sekcja "Hipotezy i następne kroki" z poleceniami diagnostycznymi.
+
+KONIEC PROMPTU
