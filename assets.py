@@ -22,7 +22,7 @@ EXPECTED_ASSETS = [
     "flag",
     "mine",
     "bg",
-] + [f"number_{i}" for i in range(1, 9)]
+] + [f"number_{i}" for i in range(1, 9)] + ["background_music"]
 
 
 class AssetManager:
@@ -59,7 +59,7 @@ class AssetManager:
 
         target_path = self._asset_path(name)
         if target_path.exists():
-            return self._safe_load(target_path)
+            return AssetManager._safe_load(target_path)
 
         # fallback do wersji light (nawet gdy jesteśmy w dark mode)
         if path_light.exists():
@@ -70,20 +70,6 @@ class AssetManager:
 
         # Brak pliku - rysujemy zastępcze
         return self._make_fallback(name)
-
-    @staticmethod
-    def _safe_load(path: Path) -> pygame.Surface:
-        try:
-            return pygame.image.load(str(path)).convert_alpha()
-        except Exception:
-            return AssetManager._make_fallback(str(path))
-
-    @staticmethod
-    def _darken_surface(surface: pygame.Surface, factor: float = 0.5) -> pygame.Surface:
-        """Przyciemnia powierzchnię (używane gdy brakuje dark-mode assetu)."""
-        dark = surface.copy()
-        dark.fill((0, 0, 0, int(255 * (1 - factor))), special_flags=pygame.BLEND_RGBA_MULT)
-        return dark
 
     @staticmethod
     def _make_fallback(name: str, size: int = 64) -> pygame.Surface:
@@ -101,3 +87,22 @@ class AssetManager:
         rect = text.get_rect(center=surf.get_rect().center)
         surf.blit(text, rect)
         return surf
+
+    @staticmethod
+    def _safe_load(path: Path) -> pygame.Surface:
+        try:
+            return pygame.image.load(str(path)).convert_alpha()
+        except Exception:
+            return AssetManager._make_fallback(str(path))
+
+    def load_music(self, name: str) -> Optional[pygame.mixer.Sound]:
+        """Ładuje muzykę w tle. Zwraca None jeśli nie istnieje (fallback: brak muzyki)."""
+        path = ASSETS_DIR / f"{name}.ogg"
+        if not path.exists():
+            path = ASSETS_DIR / f"{name}.mp3"
+        if not path.exists():
+            return None
+        try:
+            return pygame.mixer.Sound(str(path))
+        except Exception:
+            return None

@@ -20,6 +20,7 @@ VIRTUAL_WIDTH = 1280
 VIRTUAL_HEIGHT = 720
 MIN_WINDOW_WIDTH = 640
 MIN_WINDOW_HEIGHT = 480
+ANIMATION_DURATION = 0.3  # Czas animacji odsłaniania w sekundach
 
 STATUS_BAR_HEIGHT = 80
 PADDING = 16
@@ -34,7 +35,8 @@ class GameState(Enum):
 class UI:
     def __init__(self, settings: Settings) -> None:
         pygame.init()
-        pygame.display.set_caption("Saper")
+        pygame.mixer.init()  # Inicjalizacja miksera dla muzyki
+        pygame.display.set_caption("Bośnia Simulator")
         self.settings = settings
         self.asset_manager = AssetManager(dark_mode=self.settings.dark_mode)
 
@@ -44,6 +46,11 @@ class UI:
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont(None, 28)
         self.large_font = pygame.font.SysFont(None, 40)
+
+        # Muzyka w tle
+        self.background_music = self.asset_manager.load_music("background_music")
+        if self.background_music:
+            self.background_music.play(loops=-1)  # Pętla nieskończona
 
         self.state = GameState.MENU
         self.selected_level = settings.level
@@ -104,6 +111,8 @@ class UI:
             if event.type == pygame.WINDOWFOCUSLOST:
                 self.paused = True
                 self.pause_time = time.time()
+                if self.background_music:
+                    self.background_music.stop()  # Pauza muzyki
             elif event.type == pygame.WINDOWFOCUSGAINED:
                 if self.paused and self.pause_time is not None:
                     # Przesuwamy start time o czas pauzy
@@ -111,6 +120,8 @@ class UI:
                     if self.start_time is not None:
                         self.start_time += paused_for
                     self.paused = False
+                    if self.background_music:
+                        self.background_music.play(loops=-1)  # Wznowienie muzyki
 
             if event.type == pygame.VIDEORESIZE:
                 self.window = pygame.display.set_mode(
@@ -307,7 +318,7 @@ class UI:
     def _render_menu(self, canvas: pygame.Surface) -> None:
         canvas.fill((50, 50, 60))
         self._draw_text_center(
-            canvas, "Saper", y=80, font=self.large_font, color=(240, 240, 240)
+            canvas, "Bośnia Simulator", y=80, font=self.large_font, color=(240, 240, 240)
         )
 
         self._draw_text_center(
@@ -459,25 +470,43 @@ class UI:
                 canvas.blit(flag, (x, y))
             return
 
+        # Animacja odsłaniania
+        progress = 1.0
+        if tile.reveal_time is not None:
+            elapsed = time.time() - tile.reveal_time
+            progress = min(elapsed / ANIMATION_DURATION, 1.0)
+
+        # Skaluj obrazek na podstawie postępu (od 0 do pełnego rozmiaru)
+        scale_factor = progress
+        scaled_size = int(tile_size * scale_factor)
+        if scaled_size <= 0:
+            return
+
         if tile.has_mine:
-            mine = self.asset_manager.load("mine", scale=tile_size)
-            canvas.blit(mine, (x, y))
+            mine = self.asset_manager.load("mine", scale=scaled_size)
+            # Centruj skalowany obrazek
+            offset_x = (tile_size - scaled_size) // 2
+            offset_y = (tile_size - scaled_size) // 2
+            canvas.blit(mine, (x + offset_x, y + offset_y))
             return
 
         # Puste pole lub numer
-        tile_img = self.asset_manager.load("tile", scale=tile_size)
-        canvas.blit(tile_img, (x, y))
+        tile_img = self.asset_manager.load("tile", scale=scaled_size)
+        offset_x = (tile_size - scaled_size) // 2
+        offset_y = (tile_size - scaled_size) // 2
+        canvas.blit(tile_img, (x + offset_x, y + offset_y))
         if tile.adjacent > 0:
-            num = self.asset_manager.load(f"number_{tile.adjacent}", scale=tile_size)
-            canvas.blit(num, (x, y))
+            num = self.asset_manager.load(f"number_{tile.adjacent}", scale=scaled_size)
+            canvas.blit(num, (x + offset_x, y + offset_y))
 
     def _format_timer(self) -> str:
         if self.start_time is None:
-            return "00:00"
-        elapsed = int(max(0, time.time() - self.start_time))
-        minutes = elapsed // 60
-        seconds = elapsed % 60
-        return f"{minutes:02d}:{seconds:02d}"
+            return "00:00:00"
+        elapsed = max(0, time.time() - self.start_time)
+        minutes = int(elapsed) // 60
+        seconds = int(elapsed) % 60
+        milliseconds = int((elapsed % 1) * 100)
+        return f"{minutes:02d}:{seconds:02d}:{milliseconds:02d}"
 
     def _blit_scaled(self, canvas: pygame.Surface, w: int, h: int) -> None:
         """Skaluje główny canvas do rozmiaru okna, zachowując proporcje."""

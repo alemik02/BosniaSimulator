@@ -6,6 +6,7 @@ Ta warstwa nie zna Pygame'a i może być użyta w testach jednostkowych.
 from __future__ import annotations
 
 import random
+import time
 from dataclasses import dataclass, field
 from typing import Iterable, List, Optional, Set, Tuple
 
@@ -26,6 +27,7 @@ class Tile:
     revealed: bool = False
     flagged: bool = False
     adjacent: int = 0
+    reveal_time: Optional[float] = None  # Czas odsłonięcia dla animacji
 
 
 class Board:
@@ -144,6 +146,7 @@ class Board:
             return
 
         tile.revealed = True
+        tile.reveal_time = time.time()  # Czas dla animacji
         self._revealed_count += 1
 
         if tile.has_mine:
