@@ -41,26 +41,6 @@ python main.py
 
 Domyślnie gra próbuje załadować zestaw grafik PNG i muzyki z katalogu `assets/`. Jeżeli pliki nie istnieją, gra nadal będzie działać i narysuje proste kafelki oraz będzie grać bez muzyki.
 
-Oczekiwane pliki:
-
-- **Grafiki** (w `assets/light/` i `assets/dark/`):
-  - `tile.png`, `cover.png`, `flag.png`, `mine.png`, `bg.png`
-  - `number_1.png` ... `number_8.png`
-
-- **Muzyka** (w `assets/`):
-  - `background_music.ogg` lub `background_music.mp3` (muzyka w tle, pętla nieskończona)
-
-**Sugerowane wymiary grafiki:** 32x32 lub 64x64. Możesz użyć większych plików (np. 128x128) — gra je ładnie przeskaluje.
-
-### Jak dodać własne grafiki i muzykę
-
-1. Utwórz folder `assets/light/` i `assets/dark/` dla grafik.
-2. Dodaj pliki wymienione powyżej.
-3. Dla muzyki, umieść `background_music.ogg` lub `.mp3` w `assets/`.
-4. Uruchom grę i użyj klawisza `M` albo przełącznika w menu, aby przetestować tryb ciemny.
-
-> ⚠️ Jeśli w trybie ciemnym brakuje jakiegoś pliku, gra użyje pliku z `light/` i przyciemni go.
-
 ## Ustawienia
 
 Gra zapisuje ustawienia w `settings.json` w katalogu roboczym.
@@ -112,33 +92,5 @@ Testy sprawdzają:
 - obliczanie sąsiadów
 - flood fill (odsłanianie pustych)
 - detekcję wygranej/przegranej
-
-## Lista manualnych testów akceptacyjnych
-
-1. Uruchom grę i wybierz każdy poziom; sprawdź, że liczba min odpowiada konfiguracji.
-2. Odsłoń pole — pierwsze odsłonięcie nie powoduje przegranej.
-3. Oznacz flagi i użyj „chord” — sprawdź, że odsłanianie działa prawidłowo.
-4. Przełącz Dark Mode (`M` lub przycisk w menu) — wszystkie grafiki się zmieniają.
-5. Zmaksymalizuj okno na różnych proporcjach — kafelki i UI się skalują.
-6. Uruchom bez katalogu `assets/` — gra działa z fallbackami.
-7. Odsłoń pola — sprawdź animacje odsłaniania (pola skalują się płynnie przez 0.3 sekundy).
-8. Sprawdź muzykę w tle — gra się automatycznie, pauzuje przy utracie fokusu okna.
-
----
-
-## Dalsze pomysły (opcjonalne)
-
-- animacje odsłaniania (jest miejsce w kodzie w `ui.py` do rozbudowy).
-- dźwięki przy odkrywaniu pola i wygranej/przegranej.
-- zapis statystyk / najlepszych czasów.
-
----
-
-## Uwagi dla twórcy grafik
-
-Jeżeli chcesz własne PNG:
-- Użyj przezroczystego tła (alpha). Wygodniej jest pracować z kafelkami 32×32 albo 64×64.
-- Ustaw style zgodnie z klasycznym Saperem (przyciski, płaskie cienie).
-- Numerki: proste, czytelne, w kontrastowych kolorach.
 
 Powodzenia i miłej gry! 🎮
