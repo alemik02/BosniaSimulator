@@ -72,6 +72,13 @@ class AssetManager:
         return self._make_fallback(name)
 
     @staticmethod
+    def _safe_load(path: Path) -> pygame.Surface:
+        try:
+            return pygame.image.load(str(path)).convert_alpha()
+        except Exception:
+            return AssetManager._make_fallback(path.stem)
+
+    @staticmethod
     def _make_fallback(name: str, size: int = 64) -> pygame.Surface:
         """Tworzy prostą zastępczą grafikę.
 
@@ -96,9 +103,13 @@ class AssetManager:
     def _darken_surface(surface: pygame.Surface) -> pygame.Surface:
         """Przyciemnia powierzchnię dla trybu dark mode."""
         darkened = surface.copy()
-        # Przyciemniamy przez zmniejszenie jasności
-        arr = pygame.surfarray.pixels3d(darkened)
-        arr = (arr * 0.7).astype('uint8')  # 70% jasności
+        try:
+            arr = pygame.surfarray.pixels3d(darkened)
+            arr[:] = (arr * 0.7).clip(0, 255).astype('uint8')
+            del arr
+        except Exception:
+            # Jeżeli brak surfarray lub błąd, zwracamy kopię bez zmiany.
+            pass
         return darkened
 
     def load_music(self, name: str) -> Optional[pygame.mixer.Sound]:
