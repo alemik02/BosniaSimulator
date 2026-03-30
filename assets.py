@@ -72,6 +72,13 @@ class AssetManager:
         return self._make_fallback(name)
 
     @staticmethod
+    def _safe_load(path: Path) -> pygame.Surface:
+        try:
+            return pygame.image.load(str(path)).convert_alpha()
+        except Exception:
+            return AssetManager._make_fallback(path.stem)
+
+    @staticmethod
     def _make_fallback(name: str, size: int = 64) -> pygame.Surface:
         """Tworzy prostą zastępczą grafikę.
 
@@ -83,17 +90,27 @@ class AssetManager:
 
         # Rysuje literę lub cyfrę na środku jako informację.
         font = pygame.font.SysFont(None, int(size * 0.6))
-        text = font.render(name[:2].upper(), True, (20, 20, 20))
-        rect = text.get_rect(center=surf.get_rect().center)
-        surf.blit(text, rect)
+        if name.startswith("number_"):
+            text = name.split("_")[1]
+        else:
+            text = name[:2].upper()
+        text_rendered = font.render(text, True, (20, 20, 20))
+        rect = text_rendered.get_rect(center=surf.get_rect().center)
+        surf.blit(text_rendered, rect)
         return surf
 
     @staticmethod
-    def _safe_load(path: Path) -> pygame.Surface:
+    def _darken_surface(surface: pygame.Surface) -> pygame.Surface:
+        """Przyciemnia powierzchnię dla trybu dark mode."""
+        darkened = surface.copy()
         try:
-            return pygame.image.load(str(path)).convert_alpha()
+            arr = pygame.surfarray.pixels3d(darkened)
+            arr[:] = (arr * 0.7).clip(0, 255).astype('uint8')
+            del arr
         except Exception:
-            return AssetManager._make_fallback(str(path))
+            # Jeżeli brak surfarray lub błąd, zwracamy kopię bez zmiany.
+            pass
+        return darkened
 
     def load_music(self, name: str) -> Optional[pygame.mixer.Sound]:
         """Ładuje muzykę w tle. Zwraca None jeśli nie istnieje (fallback: brak muzyki)."""

@@ -57,6 +57,7 @@ class UI:
         self.board: Optional[Board] = None
         self.cursor: Optional[Cell] = None
         self.start_time: Optional[float] = None
+        self.end_time: Optional[float] = None
         self.pause_time: Optional[float] = None
         self.paused = False
         self.last_key_repeat = 0.0
@@ -73,6 +74,7 @@ class UI:
         )
         self.cursor = Cell(0, 0)
         self.start_time = None
+        self.end_time = None
         self.pause_time = None
         self.paused = False
         self.state = GameState.PLAYING
@@ -275,6 +277,8 @@ class UI:
         self.board.reveal(row, col)
         if self.board.is_win() or self.board.is_loss():
             self.state = GameState.GAME_OVER
+            if self.end_time is None:
+                self.end_time = time.time()
 
     def _toggle_dark(self) -> None:
         self.asset_manager.set_dark_mode(not self.asset_manager.dark_mode)
@@ -502,7 +506,8 @@ class UI:
     def _format_timer(self) -> str:
         if self.start_time is None:
             return "00:00:00"
-        elapsed = max(0, time.time() - self.start_time)
+        end = self.end_time if self.end_time is not None else time.time()
+        elapsed = max(0, end - self.start_time)
         minutes = int(elapsed) // 60
         seconds = int(elapsed) % 60
         milliseconds = int((elapsed % 1) * 100)
