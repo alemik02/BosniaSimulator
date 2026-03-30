@@ -83,17 +83,23 @@ class AssetManager:
 
         # Rysuje literę lub cyfrę na środku jako informację.
         font = pygame.font.SysFont(None, int(size * 0.6))
-        text = font.render(name[:2].upper(), True, (20, 20, 20))
-        rect = text.get_rect(center=surf.get_rect().center)
-        surf.blit(text, rect)
+        if name.startswith("number_"):
+            text = name.split("_")[1]
+        else:
+            text = name[:2].upper()
+        text_rendered = font.render(text, True, (20, 20, 20))
+        rect = text_rendered.get_rect(center=surf.get_rect().center)
+        surf.blit(text_rendered, rect)
         return surf
 
     @staticmethod
-    def _safe_load(path: Path) -> pygame.Surface:
-        try:
-            return pygame.image.load(str(path)).convert_alpha()
-        except Exception:
-            return AssetManager._make_fallback(str(path))
+    def _darken_surface(surface: pygame.Surface) -> pygame.Surface:
+        """Przyciemnia powierzchnię dla trybu dark mode."""
+        darkened = surface.copy()
+        # Przyciemniamy przez zmniejszenie jasności
+        arr = pygame.surfarray.pixels3d(darkened)
+        arr = (arr * 0.7).astype('uint8')  # 70% jasności
+        return darkened
 
     def load_music(self, name: str) -> Optional[pygame.mixer.Sound]:
         """Ładuje muzykę w tle. Zwraca None jeśli nie istnieje (fallback: brak muzyki)."""

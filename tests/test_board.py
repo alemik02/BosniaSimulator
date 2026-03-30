@@ -55,3 +55,34 @@ def test_win_and_loss_states() -> None:
     )
     board.reveal(*mine_cell)
     assert board.is_loss()
+
+
+def test_chord_functionality() -> None:
+    board = Board(rows=3, cols=3, mines=1, seed=123)
+    # Ręcznie ustaw miny dla przewidywalności
+    board.get_tile(0, 0).has_mine = True
+    board._calculate_adjacency()
+
+    # Odsłoń środkowe pole (powinno mieć adjacent=1)
+    board.reveal(1, 1)
+    assert board.get_tile(1, 1).adjacent == 1
+
+    # Oflaguj minę
+    board.toggle_flag(0, 0)
+
+    # Chord powinien odsłonić sąsiadów
+    board.chord(1, 1)
+    # Sprawdź czy sąsiedzi są odsłonięci (oprócz oflagowanego)
+    for n in board.get_neighbors(1, 1):
+        if (n.row, n.col) != (0, 0):
+            assert board.get_tile(n.row, n.col).revealed
+
+
+def test_first_click_safe() -> None:
+    board = Board(rows=5, cols=5, mines=5, seed=999, first_click_safe=True)
+    # Pierwsze kliknięcie powinno być bezpieczne
+    board.reveal(2, 2)
+    assert not board.get_tile(2, 2).has_mine
+    # Sprawdź czy miny są rozmieszczone
+    mines_count = sum(1 for r in range(5) for c in range(5) if board.get_tile(r, c).has_mine)
+    assert mines_count == 5
